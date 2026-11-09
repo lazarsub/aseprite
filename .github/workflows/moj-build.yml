@@ -35,11 +35,26 @@ jobs:
 
       - name: Dodavanje OpenSSL DLL fajlova
         shell: bash
+        continue-on-error: true
         run: |
           for name in libcrypto-3-x64.dll libssl-3-x64.dll; do
-            src=$(find "/c/Program Files/OpenSSL" "/c/Program Files/OpenSSL-Win64" -maxdepth 2 -iname "$name" 2>/dev/null | head -n 1)
-            if [ -n "$src" ]; then cp "$src" build/bin/ && echo "Kopiran $src"; else echo "Nije nadjen $name"; fi
+            src=""
+            for dir in "/c/Program Files/OpenSSL" "/c/Program Files/OpenSSL-Win64" "/c/Program Files/Git/mingw64/bin"; do
+              if [ -z "$src" ] && [ -d "$dir" ]; then
+                src=$(find "$dir" -maxdepth 2 -iname "$name" 2>/dev/null | head -n 1 || true)
+              fi
+            done
+            if [ -z "$src" ]; then
+              win=$(where.exe "$name" 2>/dev/null | head -n 1 | tr -d '\r' || true)
+              if [ -n "$win" ]; then src=$(cygpath -u "$win"); fi
+            fi
+            if [ -n "$src" ]; then
+              cp "$src" build/bin/ && echo "Kopiran: $src"
+            else
+              echo "Nije nadjen: $name"
+            fi
           done
+          ls build/bin/*.dll || true
 
       - name: Otpremanje gotovog programa
         uses: actions/upload-artifact@v4
