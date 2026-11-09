@@ -33,6 +33,14 @@ jobs:
         shell: bash
         run: bash build.sh --auto --norun
 
+      - name: Dodavanje OpenSSL DLL fajlova
+        shell: bash
+        run: |
+          for name in libcrypto-3-x64.dll libssl-3-x64.dll; do
+            src=$(find "/c/Program Files/OpenSSL" "/c/Program Files/OpenSSL-Win64" -maxdepth 2 -iname "$name" 2>/dev/null | head -n 1)
+            if [ -n "$src" ]; then cp "$src" build/bin/ && echo "Kopiran $src"; else echo "Nije nadjen $name"; fi
+          done
+
       - name: Otpremanje gotovog programa
         uses: actions/upload-artifact@v4
         with:
